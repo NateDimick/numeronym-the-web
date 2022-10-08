@@ -1,0 +1,43 @@
+{
+    "name": "Numeronym the Web", 
+    "version": "0.1.0",
+    "description": "Convert all text on a page to numeronyms",
+    "manifest_version": 3,
+    "background": {
+        "service_worker": "background.js"
+    },
+    "permissions": [
+        "storage",
+        "activeTab",
+        "scripting"
+    ],
+    "content_scripts": [
+        {
+            "matches": ["https://*"],
+            "js": ["s12nInit.js"]
+        }
+    ],
+    "action": {
+        "default_title": "",
+        "default_popup": "popup.html",
+        "default_icon": {
+            "48": "icons/todo.png",
+            "128": "icons/todo.png"
+        }
+    },
+    "commands": {
+        "snapTabs": {
+            "suggested_key": {
+                "windows": "Alt+Shift+N",
+                "mac": "Alt+Shift+N",
+                "linux": "Alt+Shift+N",
+                "chromeos": "Alt+Shift+N"
+            },
+            "description": ""
+        }
+    },
+    "icons": {
+        "48": "icons/todo.png",
+        "128": "icons/todo.png"
+    }
+}
