@@ -13,31 +13,22 @@
     ],
     "content_scripts": [
         {
-            "matches": ["https://*"],
+            "matches": ["https://*/*"],
             "js": ["s12nInit.js"]
         }
     ],
     "action": {
-        "default_title": "",
-        "default_popup": "popup.html",
-        "default_icon": {
-            "48": "icons/todo.png",
-            "128": "icons/todo.png"
-        }
-    },
+        "default_title": "Toggle numeronyms"
+      },
     "commands": {
-        "snapTabs": {
+        "s12nToggle": {
             "suggested_key": {
                 "windows": "Alt+Shift+N",
                 "mac": "Alt+Shift+N",
                 "linux": "Alt+Shift+N",
                 "chromeos": "Alt+Shift+N"
             },
-            "description": ""
+            "description": "toggle numeronyms"
         }
-    },
-    "icons": {
-        "48": "icons/todo.png",
-        "128": "icons/todo.png"
     }
 }

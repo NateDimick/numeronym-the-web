@@ -1,25 +1,34 @@
-function s12nOn() {
-    Array.from(document.getElementsByClassName("s12n")).forEach(e => e.style.display = e.tagName === "SPAN" ? "inline" : "block");
-    Array.from(document.getElementsByClassName("not-s12n")).forEach(e => e.style.display = "none");    
-}
-
-function s12nOff() {
-    Array.from(document.getElementsByClassName("s12n")).forEach(e => e.style.display = "none");
-    Array.from(document.getElementsByClassName("not-s12n")).forEach(e => e.style.display = e.tagName === "SPAN" ? "inline" : "block");
+function getS12nState() {
+    return new Promise((resolve, reject) => {
+        try {
+            console.log("query storage for full state")
+            chrome.storage.local.get("s12n", result => {
+                console.log(`storage fetch result: ${JSON.stringify(result)}`)
+                resolve(result.s12n || {})
+            })
+        } catch (error) {
+            console.log(`storage error: ${error}`)
+            reject({})
+        }
+    })
 }
 
 async function toggleS12n(tab) {
-    let on
-    await chrome.storage.local.get(tab.id, (result) => {
-        on = result
-    })
-    let onBool = on === "true" 
-    let f = onBool ? s12nOff : s12nOn
-    chrome.scripting.executeScript({
-        target: {tabId: tab.id},
-        func: f
-    })
-    chrome.storage.local.set({`${tab.id}`: `${onBool}`}, () => {console.log("set value")})
+    let key = `${tab.id}`
+    console.log(`action clicked on tab ${key}`)
+    let s12nState = await getS12nState()
+    let on = s12nState[key] === true
+    console.log(`s12n state for tab ${key}: ${on}`)
+    console.log(`full s12n state: ${JSON.stringify(s12nState)}`)
+    if (on) {
+        console.log("will turn s12n off")
+    } else {
+        console.log("will turn s12n on")
+    }
+    s12nState[key] = !on
+    chrome.tabs.sendMessage(tab.id, {s12n: on})
+    
+    chrome.storage.local.set({s12n: s12nState}, () => {console.log("set value")})
 }
 
 chrome.action.onClicked.addListener(toggleS12n)

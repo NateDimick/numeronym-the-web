@@ -3,7 +3,7 @@
  * where 12 is the number if letters between s and n in the name "Schlerpehuizen", for the unaware
  */
 
-function convert(regularString) {
+ function convert(regularString) {
     // split into 3 parts, leading punc, word, trailing punc
     if (regularString.match(/[0-9\/.]*/)[0] === regularString) {
         return regularString; // ignore numbers and dates
@@ -34,96 +34,43 @@ function convertParagraph(paragraph) {
     return rewrittenParagraph.join(" ");
 }
 
-function convertNode2(node) {
-    // base case - node is an element with no children - it's contents are either empty or just text
-    if (!node.children?.length && node.nodeType === 1) {
-        if (!node.classList.contains("s12n") 
-            && !node.classList.contains("not-s12n") 
-            && !node.classList.contains("s12n-protected") 
-            && node.textContent.trim() !== "") {
-            let s12nCopy = node.cloneNode();
-            s12nCopy.textContent = convertParagraph(node.textContent);
-            s12nCopy.classList.add("s12n");
-            if (node.id) {
-                s12nCopy.id = node.id + "-s12n";
-            }
-            node.classList.add("not-s12n");
-            node.parentNode.insertBefore(s12nCopy, node);
-        }
-    }    
-    //recursive case 1: node has mixed children
-    if (hasMixedChildNodes(node)) {
-        // must do special construction
-        let s12nCopy = node.cloneNode();
-        s12nCopy.innerHTML = node.innerHTML;
-        convertNodeInPlace(s12nCopy);
-        node.classList.add("not-s12n");
-        node.parentNode.insertBefore(s12nCopy, node);
+function s12nOn() {
+    console.log("turning numeronyms on")
+    Array.from(document.getElementsByClassName("s12n")).forEach(e => e.textContent = convertParagraph(e.textContent));
+}
+
+function s12nOff() {
+    console.log("turning numeronyms off")
+    Array.from(document.getElementsByClassName("s12n")).forEach(e => e.textContent = e.getAttribute("s12noriginaltext"));
+}
+
+function preparePageForS12n() {
+    const root = document.getElementsByTagName('body')[0];
+    prepareNode(root)
+}
+
+function prepareNode(node) {
+    if (!node.children?.length 
+        && node.nodeType === 1 
+        && node.textContent !== "" 
+        && node.tagName.toLowerCase() !== "script" 
+        && node.tagName.toLowerCase() !== "style") {
+        node.classList.add("s12n")
+        node.setAttribute("s12noriginaltext", node.textContent)
     }
     // recursive case 2: no exclusive text, recurse over children
-    else if (node.children) {
-        Array.from(node.children).forEach(n => convertNode2(n));
+    else if (node.children?.length) {
+        Array.from(node.children).forEach(n => prepareNode(n));
     }
 }
 
-function convertNodeInPlace(node) {
-    if (node.nodeType === 1) {
-        node.classList.add("s12n");
-        if (node.id) {
-            node.id = node.id + "-s12n";
-        }
-        Array.from(node.childNodes).forEach(n => convertNodeInPlace(n));
-    }
-    else if (node.nodeType === 3) {
-        node.textContent = convertParagraph(node.textContent);
-    }
-}
+preparePageForS12n()
 
-function hasMixedChildNodes(node) {
-    let elementChildren = false;
-    let nonEmptyTextChildren = false;
-    Array.from(node.childNodes).forEach(n => {
-        if (n.nodeType == 1) {
-            elementChildren = true;
-        } else if (n.nodeType === 3 && n.textContent.trim() !== "") {
-            nonEmptyTextChildren = true;
-        }
-    })
-    return elementChildren && nonEmptyTextChildren;
-}
-
-function convertPage() {
-    const root = document.getElementsByTagName('body')[0];
-    convertNode2(root);
-}
-
-function toggles12n(event) {
-    const on = event.target.checked;
-    if (on) {
-        Array.from(document.getElementsByClassName("s12n")).forEach(e => e.style.display = e.tagName === "SPAN" ? "inline" : "block");
-        Array.from(document.getElementsByClassName("not-s12n")).forEach(e => e.style.display = "none");
+chrome.runtime.onMessage.addListener((msg, sender, respond) => {
+    console.log(`recieved update message: ${JSON.stringify(msg)}`)
+    if (msg.s12n) {
+        s12nOn()
     } else {
-        Array.from(document.getElementsByClassName("s12n")).forEach(e => e.style.display = "none");
-        Array.from(document.getElementsByClassName("not-s12n")).forEach(e => e.style.display = e.tagName === "SPAN" ? "inline" : "block");
+        s12nOff()
     }
-}
-
-function traverseBody2(node, tabs) {
-    console.log(`${"\t".repeat(tabs)} ${node.nodeType} ${node.tagName} ${node.children?.length} ${node.childNodes.length} ${hasMixedChildNodes(node)}`);
-    if (node.nodeType == 3) {
-        console.log(`${"\t".repeat(tabs)} ${node.textContent}`);
-        const match = node.textContent.match(/\s+/);
-        if (match) {
-            console.log("text is only whitespace", match[0] === node.textContent);
-        }
-        
-    }
-    Array.from(node.childNodes).forEach(e => traverseBody2(e, tabs +1))
-}
-
-// ["Montpelier", "Exclamation!", "Interrobang?!?!", ">>>>>bicycle", "\"quote\""].forEach(w => {
-//     let i = convert(w);
-//     console.log(i);
-// })
-
-convertPage();
+})
