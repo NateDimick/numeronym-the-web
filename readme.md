@@ -12,5 +12,4 @@ This extension can convert an entire webpage's text content to numeronyms and ba
 
 * icons
 * toggle icon based on page state
-* respond to state update message
 * set tab state to false on load / reload

@@ -25,10 +25,11 @@ async function toggleS12n(tab) {
     } else {
         console.log("will turn s12n on")
     }
-    s12nState[key] = !on
-    chrome.tabs.sendMessage(tab.id, {s12n: on})
-    
-    chrome.storage.local.set({s12n: s12nState}, () => {console.log("set value")})
+    chrome.tabs.sendMessage(tab.id, {s12n: !on}, (resp) => {
+        console.log(`updating storage state after content script response: ${JSON.stringify(resp)}`)
+        s12nState[key] = resp.s12n
+        chrome.storage.local.set({s12n: s12nState}, () => {console.log("set value")})
+    })
 }
 
 chrome.action.onClicked.addListener(toggleS12n)

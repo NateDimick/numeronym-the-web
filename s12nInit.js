@@ -111,4 +111,5 @@ chrome.runtime.onMessage.addListener((msg, sender, respond) => {
     } else {
         s12nOff()
     }
+    respond({s12n: msg.s12n})
 })
