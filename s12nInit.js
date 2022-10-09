@@ -1,9 +1,4 @@
-/**
- * Mocks how stupid the naming convention of "s12n" is 
- * where 12 is the number if letters between s and n in the name "Schlerpehuizen", for the unaware
- */
-
- function convert(regularString) {
+function convert(regularString) {
     // split into 3 parts, leading punc, word, trailing punc
     if (regularString.match(/[0-9\/.]*/)[0] === regularString) {
         return regularString; // ignore numbers and dates
@@ -34,14 +29,33 @@ function convertParagraph(paragraph) {
     return rewrittenParagraph.join(" ");
 }
 
+function convertMixedNode(node) {
+    Array.from(node.childNodes).forEach(n => {
+        if (n.nodeType === 3) {
+            n.textContent = convertParagraph(n.textContent)
+        }
+    })
+}
+
+function revertMixedNode(node) {
+    let originalTexts = JSON.parse(node.getAttribute("s12noriginaltext"))
+    Array.from(node.childNodes).forEach((n, i) => {
+        if (n.nodeType === 3) {
+            n.textContent = originalTexts[i]
+        }
+    })
+}
+
 function s12nOn() {
     console.log("turning numeronyms on")
-    Array.from(document.getElementsByClassName("s12n")).forEach(e => e.textContent = convertParagraph(e.textContent));
+    Array.from(document.getElementsByClassName("s12n")).forEach(e => e.textContent = convertParagraph(e.textContent))
+    Array.from(document.getElementsByClassName("s12n-mixed")).forEach(e => convertMixedNode(e))
 }
 
 function s12nOff() {
     console.log("turning numeronyms off")
-    Array.from(document.getElementsByClassName("s12n")).forEach(e => e.textContent = e.getAttribute("s12noriginaltext"));
+    Array.from(document.getElementsByClassName("s12n")).forEach(e => e.textContent = e.getAttribute("s12noriginaltext"))
+    Array.from(document.getElementsByClassName("s12n-mixed")).forEach(e => revertMixedNode(e))
 }
 
 function preparePageForS12n() {
@@ -50,24 +64,48 @@ function preparePageForS12n() {
 }
 
 function prepareNode(node) {
-    if (!node.children?.length 
-        && node.nodeType === 1 
-        && node.textContent !== "" 
-        && node.tagName.toLowerCase() !== "script" 
-        && node.tagName.toLowerCase() !== "style") {
+    if (!node.children?.length  // no inner element - this is a leaf element
+        && node.nodeType === 1  // not a text node (3)
+        && node.textContent !== "" // not empty
+        && node.tagName.toLowerCase() !== "script" // do not want to edit script
+        && node.tagName.toLowerCase() !== "style") { // do not want to edit style
         node.classList.add("s12n")
         node.setAttribute("s12noriginaltext", node.textContent)
     }
+    // recursive case 1:
+    else if (hasMixedChildNodes(node)) {
+        node.classList.add("s12n-mixed")
+        let inBetweenText = []
+        Array.from(node.childNodes).forEach(n => {
+            if (n.nodeType === 3) {
+                inBetweenText.push(n.textContent)
+            }
+        })
+        node.setAttribute("s12noriginaltext", JSON.stringify(inBetweenText))
+    }
     // recursive case 2: no exclusive text, recurse over children
-    else if (node.children?.length) {
+    if (node.children?.length) {
         Array.from(node.children).forEach(n => prepareNode(n));
     }
+}
+
+function hasMixedChildNodes(node) {
+    let elementChildren = false;
+    let nonEmptyTextChildren = false;
+    Array.from(node.childNodes).forEach(n => {
+        if (n.nodeType == 1) {
+            elementChildren = true;
+        } else if (n.nodeType === 3 && n.textContent.trim() !== "") {
+            nonEmptyTextChildren = true;
+        }
+    })
+    return elementChildren && nonEmptyTextChildren;
 }
 
 preparePageForS12n()
 
 chrome.runtime.onMessage.addListener((msg, sender, respond) => {
-    console.log(`recieved update message: ${JSON.stringify(msg)}`)
+    console.log(`received update message: ${JSON.stringify(msg)}`)
     if (msg.s12n) {
         s12nOn()
     } else {

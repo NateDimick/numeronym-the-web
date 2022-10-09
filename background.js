@@ -32,3 +32,10 @@ async function toggleS12n(tab) {
 }
 
 chrome.action.onClicked.addListener(toggleS12n)
+
+chrome.commands.onCommand.addListener((command) => {
+    if (command === "s12nToggle") {
+      console.log("keyboard shortcut not supported yet")
+      // todo: get active tab
+    }
+  })
