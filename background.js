@@ -29,7 +29,15 @@ async function toggleS12n(tab) {
         console.log(`updating storage state after content script response: ${JSON.stringify(resp)}`)
         s12nState[key] = resp.s12n
         chrome.storage.local.set({s12n: s12nState}, () => {console.log("set value - script update")})
+        setIcon(resp.s12n, tab.id)
     })
+}
+
+function setIcon(s12nOn, tabId) {
+    let path = s12nOn ? "icons/s12n48_on.png" : "icons/s12n48_off.png"
+    let text = s12nOn ? "T4e N8s: N8s are on" : "Toggle Numeronyms: Numeronyms are off"
+    chrome.action.setIcon({path: path, tabId: tabId})
+    chrome.action.setTitle({title: text, tabId: tabId})
 }
 
 chrome.action.onClicked.addListener(toggleS12n)
@@ -48,6 +56,7 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
     if (changeInfo.status == "complete") {
         let s12nState = await getS12nState()
         s12nState[`${tabId}`] = false
+        setIcon(false, tabId)
         chrome.storage.local.set({s12n: s12nState}, () => {console.log("set value - tab update")})
     }
 })
