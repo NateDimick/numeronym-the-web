@@ -7,9 +7,10 @@
         "service_worker": "background.js"
     },
     "permissions": [
-        "storage",
         "activeTab",
-        "scripting"
+        "scripting",
+        "storage",
+        "tabs"
     ],
     "content_scripts": [
         {
@@ -18,7 +19,7 @@
         }
     ],
     "action": {
-        "default_title": "Toggle numeronyms"
+        "default_title": "Toggle Numeronyms"
       },
     "commands": {
         "s12nToggle": {
