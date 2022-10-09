@@ -19,7 +19,11 @@
         }
     ],
     "action": {
-        "default_title": "Toggle Numeronyms"
+        "default_title": "Toggle Numeronyms",
+        "default_icon": {
+            "48": "icons/s12n48_off.png",
+            "128": "icons/s12n128.png"
+        }
       },
     "commands": {
         "s12nToggle": {
@@ -31,5 +35,8 @@
             },
             "description": "toggle numeronyms"
         }
+    },
+    "icons": {
+        "128": "icons/s12n128.png"
     }
 }
