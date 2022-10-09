@@ -28,7 +28,7 @@ async function toggleS12n(tab) {
     chrome.tabs.sendMessage(tab.id, {s12n: !on}, (resp) => {
         console.log(`updating storage state after content script response: ${JSON.stringify(resp)}`)
         s12nState[key] = resp.s12n
-        chrome.storage.local.set({s12n: s12nState}, () => {console.log("set value")})
+        chrome.storage.local.set({s12n: s12nState}, () => {console.log("set value - script update")})
     })
 }
 
@@ -41,4 +41,20 @@ chrome.commands.onCommand.addListener((command) => {
         toggleS12n(tabs[0])
       })
     }
+})
+
+chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
+    console.log(`tab ${tabId} updated - s12n state must be reset`)
+    if (changeInfo.status == "complete") {
+        let s12nState = await getS12nState()
+        s12nState[`${tabId}`] = false
+        chrome.storage.local.set({s12n: s12nState}, () => {console.log("set value - tab update")})
+    }
+})
+
+chrome.tabs.onRemoved.addListener(async (tabId, removeInfo) => {
+    console.log(`tab ${tabId} closed - removing s12n state for that tab`)
+    let s12nState = await getS12nState()
+    delete s12nState[`${tabId}`]
+    chrome.storage.local.set({s12n: s12nState}, () => {console.log("set value - tab closed")})
 })
